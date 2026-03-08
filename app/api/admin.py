@@ -39,12 +39,26 @@ router = APIRouter(
 # Подключаем папку с HTML шаблонами
 templates = Jinja2Templates(directory="app/templates")
 
+# В get_admin_panel добавь получение настроек:
 @router.get("/", response_class=HTMLResponse)
 def get_admin_panel(request: Request, db: Session = Depends(get_db)):
-    """Отображает главную страницу админки"""
     configs = vpn_service.get_all_configs(db)
-    # Передаем список configs в HTML шаблон
-    return templates.TemplateResponse("admin.html", {"request": request, "configs": configs})
+    settings = vpn_service.get_settings(db) # Получаем настройки
+    return templates.TemplateResponse("admin.html", {
+        "request": request, 
+        "configs": configs, 
+        "settings": settings
+    })
+
+# Новый роут для сохранения настроек
+@router.post("/update-settings")
+def update_settings(
+    sub_name: str = Form(...), 
+    sub_description: str = Form(...), 
+    db: Session = Depends(get_db)
+):
+    vpn_service.update_settings(db, sub_name, sub_description)
+    return RedirectResponse(url="/admin", status_code=303)
 
 @router.post("/add")
 def add_config(

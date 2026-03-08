@@ -1,6 +1,6 @@
 # app/repository/vpn_repository.py
 from sqlalchemy.orm import Session
-from app.domain.models import VpnConfig
+from app.domain.models import SubscriptionSettings, VpnConfig
 from app.domain.schemas import VpnConfigCreate, VpnConfigUpdate
 
 class VpnRepository:
@@ -42,6 +42,21 @@ class VpnRepository:
             db.delete(db_config)
             db.commit()
         return db_config
+    # В конец класса VpnRepository добавь:
+    def get_settings(self, db: Session):
+        settings = db.query(SubscriptionSettings).first()
+        if not settings:
+            settings = SubscriptionSettings(id=1)
+            db.add(settings)
+            db.commit()
+        return settings
+
+    def update_settings(self, db: Session, name: str, desc: str):
+        settings = self.get_settings(db)
+        settings.sub_name = name
+        settings.sub_description = desc
+        db.commit()
+        return settings
 
 # Создаем экземпляр репозитория для импорта в другие файлы
 vpn_repo = VpnRepository()

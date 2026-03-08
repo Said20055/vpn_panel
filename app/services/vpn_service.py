@@ -6,6 +6,12 @@ from app.repository.vpn_repository import vpn_repo
 from app.domain.schemas import VpnConfigCreate, VpnConfigUpdate
 
 class VpnService:
+    def get_settings(self, db: Session):
+        return vpn_repo.get_settings(db)
+
+    def update_settings(self, db: Session, name: str, desc: str):
+        return vpn_repo.update_settings(db, name, desc)
+    
     def get_all_configs(self, db: Session):
         return vpn_repo.get_all(db)
 

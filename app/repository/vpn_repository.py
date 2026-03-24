@@ -1,49 +1,72 @@
 # app/repository/vpn_repository.py
 from sqlalchemy.orm import Session
-from app.domain.models import SubscriptionSettings, VpnConfig
-from app.domain.schemas import VpnConfigCreate, VpnConfigUpdate
+from app.domain.models import Config, SubscriptionSettings
 
-class VpnRepository:
-    def get_all(self, db: Session):
-        """Получить все конфигурации (и активные, и неактивные)"""
-        return db.query(VpnConfig).all()
 
-    def get_active(self, db: Session):
-        """Получить только активные конфигурации для подписки"""
-        return db.query(VpnConfig).filter(VpnConfig.is_active == True).all()
+class ConfigRepository:
+    def get_all(self, db: Session) -> list[Config]:
+        return db.query(Config).all()
 
-    def get_by_id(self, db: Session, config_id: int):
-        """Получить конфигурацию по ID"""
-        return db.query(VpnConfig).filter(VpnConfig.id == config_id).first()
+    def get_manual(self, db: Session) -> list[Config]:
+        """Configs added manually (no external subscription)."""
+        return db.query(Config).filter(Config.subscription_id.is_(None)).all()
 
-    def create(self, db: Session, config: VpnConfigCreate):
-        """Добавить новый конфиг"""
-        # Используем model_dump() (в pydantic v2) для перевода схемы в словарь
-        db_config = VpnConfig(**config.model_dump())
-        db.add(db_config)
+    def get_by_subscription(self, db: Session, sub_id: int) -> list[Config]:
+        return db.query(Config).filter(Config.subscription_id == sub_id).all()
+
+    def get_active(self, db: Session) -> list[Config]:
+        return db.query(Config).filter(Config.is_active == True).all()
+
+    def get_by_id(self, db: Session, config_id: int) -> Config | None:
+        return db.query(Config).filter(Config.id == config_id).first()
+
+    def create(self, db: Session, name: str, raw_link: str, subscription_id: int | None = None) -> Config:
+        cfg = Config(name=name, raw_link=raw_link, subscription_id=subscription_id)
+        db.add(cfg)
         db.commit()
-        db.refresh(db_config)
-        return db_config
+        db.refresh(cfg)
+        return cfg
 
-    def update(self, db: Session, config_id: int, config_data: VpnConfigUpdate):
-        """Обновить существующий конфиг"""
-        db_config = self.get_by_id(db, config_id)
-        if db_config:
-            for key, value in config_data.model_dump().items():
-                setattr(db_config, key, value)
+    def create_many(self, db: Session, items: list[dict], subscription_id: int) -> int:
+        configs = [
+            Config(name=item["name"], raw_link=item["raw_link"], subscription_id=subscription_id)
+            for item in items
+        ]
+        db.add_all(configs)
+        db.commit()
+        return len(configs)
+
+    def update(self, db: Session, config_id: int, name: str, raw_link: str, is_active: bool) -> Config | None:
+        cfg = self.get_by_id(db, config_id)
+        if cfg:
+            cfg.name = name
+            cfg.raw_link = raw_link
+            cfg.is_active = is_active
             db.commit()
-            db.refresh(db_config)
-        return db_config
+            db.refresh(cfg)
+        return cfg
+
+    def toggle_active(self, db: Session, config_id: int) -> bool:
+        cfg = self.get_by_id(db, config_id)
+        if cfg:
+            cfg.is_active = not cfg.is_active
+            db.commit()
+            return cfg.is_active
+        return False
+
+    def rename(self, db: Session, config_id: int, name: str):
+        cfg = self.get_by_id(db, config_id)
+        if cfg:
+            cfg.name = name
+            db.commit()
 
     def delete(self, db: Session, config_id: int):
-        """Удалить конфиг"""
-        db_config = self.get_by_id(db, config_id)
-        if db_config:
-            db.delete(db_config)
+        cfg = self.get_by_id(db, config_id)
+        if cfg:
+            db.delete(cfg)
             db.commit()
-        return db_config
-    # В конец класса VpnRepository добавь:
-    def get_settings(self, db: Session):
+
+    def get_settings(self, db: Session) -> SubscriptionSettings:
         settings = db.query(SubscriptionSettings).first()
         if not settings:
             settings = SubscriptionSettings(id=1)
@@ -51,12 +74,12 @@ class VpnRepository:
             db.commit()
         return settings
 
-    def update_settings(self, db: Session, name: str, desc: str):
+    def update_settings(self, db: Session, name: str, desc: str) -> SubscriptionSettings:
         settings = self.get_settings(db)
         settings.sub_name = name
         settings.sub_description = desc
         db.commit()
         return settings
 
-# Создаем экземпляр репозитория для импорта в другие файлы
-vpn_repo = VpnRepository()
+
+config_repo = ConfigRepository()

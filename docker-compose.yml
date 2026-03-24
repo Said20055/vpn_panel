@@ -4,6 +4,8 @@ services:
   web:
     build: .
     restart: always
+    env_file:
+      - .env
     volumes:
       # Сохраняем базу данных на сервере в папке ./data
       - ./data:/app/data

@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 os.makedirs("./data", exist_ok=True)
     
 # Используем SQLite для простоты
-SQLALCHEMY_DATABASE_URL = "sqlite:///./vpn_configs.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./data/vpn_configs.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}

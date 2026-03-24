@@ -1,4 +1,3 @@
-<!-- app/templates/admin.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,110 +5,731 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VPN Admin Panel</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface2: #21253a;
+            --border: rgba(255,255,255,0.08);
+            --accent: #7c6ff7;
+            --accent2: #5a4fcf;
+            --text: #e2e4f0;
+            --muted: rgba(226,228,240,0.45);
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px; min-height: 100vh; background: var(--surface);
+            border-right: 1px solid var(--border); position: fixed; top: 0; left: 0;
+            display: flex; flex-direction: column; z-index: 100;
+            transition: transform .25s;
+        }
+        .sidebar-brand { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+        .sidebar-brand span { font-size: 1rem; font-weight: 700; color: var(--accent); }
+        .sidebar-brand small { display: block; font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+        .nav-link-side {
+            display: flex; align-items: center; gap: 0.65rem;
+            padding: 0.6rem 1.5rem; color: var(--muted); font-size: 0.875rem;
+            border-radius: 0; transition: background .15s, color .15s; text-decoration: none;
+        }
+        .nav-link-side:hover, .nav-link-side.active { background: rgba(124,111,247,.12); color: var(--accent); }
+        .sidebar-footer { margin-top: auto; padding: 1rem 1.5rem; border-top: 1px solid var(--border); }
+
+        /* Main */
+        .main-content { margin-left: 240px; padding: 1.75rem; max-width: 1100px; }
+
+        /* Cards */
+        .card-dark {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; margin-bottom: 1.5rem;
+        }
+        .card-dark .card-header {
+            background: transparent; border-bottom: 1px solid var(--border);
+            padding: 1rem 1.25rem; font-weight: 600; font-size: 0.9rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .card-dark .card-body { padding: 1.25rem; }
+
+        /* Forms */
+        .form-control-dark {
+            background: var(--surface2); border: 1px solid var(--border);
+            color: var(--text); border-radius: 8px;
+        }
+        .form-control-dark:focus {
+            background: var(--surface2); border-color: var(--accent); color: var(--text);
+            box-shadow: 0 0 0 3px rgba(124,111,247,.2);
+        }
+        .form-control-dark::placeholder { color: var(--muted); }
+        .form-label-dark { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.3rem; }
+
+        /* Buttons */
+        .btn-accent { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; color: #fff; border-radius: 8px; font-size: 0.875rem; }
+        .btn-accent:hover { opacity: .85; color: #fff; }
+        .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; font-size: 0.8rem; }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-danger-soft { background: rgba(220,53,69,.12); border: 1px solid rgba(220,53,69,.25); color: #f8a0a9; border-radius: 8px; font-size: 0.8rem; }
+        .btn-danger-soft:hover { background: rgba(220,53,69,.22); color: #f8a0a9; }
+        .btn-success-soft { background: rgba(25,135,84,.12); border: 1px solid rgba(25,135,84,.25); color: #75d4a8; border-radius: 8px; font-size: 0.8rem; }
+        .btn-success-soft:hover { background: rgba(25,135,84,.22); color: #75d4a8; }
+        .btn-warn-soft { background: rgba(255,193,7,.1); border: 1px solid rgba(255,193,7,.25); color: #ffd95e; border-radius: 8px; font-size: 0.8rem; }
+        .btn-warn-soft:hover { background: rgba(255,193,7,.2); color: #ffd95e; }
+
+        /* Table */
+        .table-dark-custom {
+            color: var(--text);
+            --bs-table-color: var(--text);
+            --bs-table-bg: transparent;
+            --bs-table-border-color: rgba(255,255,255,0.08);
+            --bs-table-hover-bg: rgba(255,255,255,.05);
+            --bs-table-hover-color: var(--text);
+            --bs-table-striped-color: var(--text);
+            --bs-table-striped-bg: transparent;
+            --bs-table-active-color: var(--text);
+            --bs-table-active-bg: transparent;
+            --bs-table-accent-bg: transparent;
+        }
+        .table-dark-custom th { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); font-weight: 500; background: transparent; }
+        .table-dark-custom td { border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 0.875rem; background: transparent; }
+        .table-dark-custom tr:last-child td { border-bottom: none; }
+        .table-dark-custom tr:hover td { background: rgba(255,255,255,.05) !important; }
+
+        /* Badge */
+        .badge-active { background: rgba(25,135,84,.15); color: #75d4a8; border: 1px solid rgba(25,135,84,.25); font-size: 0.72rem; padding: .3em .6em; border-radius: 6px; }
+        .badge-inactive { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--border); font-size: 0.72rem; padding: .3em .6em; border-radius: 6px; }
+
+        /* Sub link */
+        .sub-link-box {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 10px; padding: .65rem 1rem;
+            display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+        }
+        .sub-link-box code { color: var(--accent); font-size: 0.82rem; word-break: break-all; }
+
+        /* Mobile cards (shown on small screens instead of table) */
+        .config-card {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 10px; padding: .9rem 1rem; margin-bottom: .65rem;
+        }
+        .config-card .config-name { font-weight: 600; font-size: .9rem; }
+        .config-card .config-url { color: var(--muted); font-size: .75rem; word-break: break-all; margin-top: 2px; }
+
+        /* Fetch results */
+        #fetch-results { display: none; }
+        .fetch-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: .65rem .9rem; margin-bottom: .5rem; }
+        .fetch-item label { cursor: pointer; width: 100%; }
+
+        /* Toasts */
+        .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 1rem; }
+            .mobile-toggle { display: flex !important; }
+        }
+        .mobile-toggle { display: none; position: fixed; top: .75rem; left: .75rem; z-index: 200; }
+
+        /* Overlay */
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 99; }
+        .sidebar-overlay.show { display: block; }
+
+        /* Modal dark */
+        .modal-content { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+        .modal-header { border-bottom: 1px solid var(--border); }
+        .modal-footer { border-top: 1px solid var(--border); }
+        .btn-close { filter: invert(1); }
+
+        /* Collapsible external configs */
+        .ext-toggle { cursor: pointer; user-select: none; }
+        .ext-toggle:hover { color: var(--accent); }
+    </style>
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container mt-4">
-    <h2 class="mb-4">Управление VPN (Happ)</h2>
+<!-- Mobile toggle -->
+<button class="btn btn-ghost mobile-toggle" id="sidebarToggle" style="border-radius:8px;padding:.4rem .6rem;">
+    <i class="bi bi-list fs-5"></i>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- Блок настроек подписки -->
-    <div class="card mb-4">
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <span>🛡 VPN Panel</span>
+        <small>Happ Admin</small>
+    </div>
+    <div class="pt-2">
+        <a href="#section-settings" class="nav-link-side"><i class="bi bi-sliders"></i> Настройки</a>
+        <a href="#section-add" class="nav-link-side"><i class="bi bi-plus-circle"></i> Добавить сервер</a>
+        <a href="#section-configs" class="nav-link-side"><i class="bi bi-server"></i> Серверы</a>
+        <a href="#section-external" class="nav-link-side"><i class="bi bi-link-45deg"></i> Внешние подписки</a>
+    </div>
+    <div class="sidebar-footer">
+        <a href="/logout" class="nav-link-side" style="padding:.5rem 0;">
+            <i class="bi bi-box-arrow-left"></i> Выйти
+        </a>
+    </div>
+</nav>
+
+<!-- Main -->
+<div class="main-content">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div style="margin-left:2.5rem;" class="d-block d-md-none"></div>
+        <h5 class="mb-0 fw-700" style="font-size:1.1rem;">Управление VPN</h5>
+        <div></div>
+    </div>
+
+    <!-- Subscription link -->
+    <div class="card-dark">
+        <div class="card-body py-3">
+            <div class="sub-link-box">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-broadcast" style="color:var(--accent)"></i>
+                    <div>
+                        <div style="font-size:.75rem;color:var(--muted);">Ссылка для Happ</div>
+                        <code id="sub-link-text">/sub</code>
+                    </div>
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="copySubLink()" title="Скопировать">
+                    <i class="bi bi-clipboard" id="copy-icon"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="card-dark" id="section-settings">
+        <div class="card-header"><i class="bi bi-sliders" style="color:var(--accent)"></i> Настройки подписки</div>
         <div class="card-body">
-            <h5 class="card-title">Настройки подписки</h5>
             <form action="/admin/update-settings" method="post" class="row g-3">
                 <div class="col-md-5">
-                    <input type="text" name="sub_name" class="form-control" value="{{ settings.sub_name }}" placeholder="Название подписки" required>
+                    <label class="form-label-dark">Название подписки</label>
+                    <input type="text" name="sub_name" class="form-control form-control-dark"
+                           value="{{ settings.sub_name }}" placeholder="Мой VPN" required>
                 </div>
                 <div class="col-md-5">
-                    <input type="text" name="sub_description" class="form-control" value="{{ settings.sub_description }}" placeholder="Ссылка (TG/Сайт)">
+                    <label class="form-label-dark">Ссылка поддержки (TG / сайт)</label>
+                    <input type="text" name="sub_description" class="form-control form-control-dark"
+                           value="{{ settings.sub_description }}" placeholder="https://t.me/...">
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-success w-100">Сохранить</button>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-accent w-100">
+                        <i class="bi bi-check2"></i> Сохранить
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Форма добавления нового конфига -->
-    <div class="card mb-4">
+    <!-- Add config -->
+    <div class="card-dark" id="section-add">
+        <div class="card-header"><i class="bi bi-plus-circle" style="color:var(--accent)"></i> Добавить сервер вручную</div>
         <div class="card-body">
-            <h5 class="card-title">Добавить новый сервер</h5>
             <form action="/admin/add" method="post" class="row g-3">
                 <div class="col-md-4">
-                    <input type="text" name="name" class="form-control" placeholder="Название (например, 🇩🇪 DE VLESS)" required>
+                    <label class="form-label-dark">Название</label>
+                    <input type="text" name="name" class="form-control form-control-dark"
+                           placeholder="🇩🇪 Germany VLESS" required>
                 </div>
                 <div class="col-md-6">
-                    <input type="text" name="config_url" class="form-control" placeholder="Ссылка (vless://...)" required>
+                    <label class="form-label-dark">Конфигурация</label>
+                    <input type="text" name="raw_link" class="form-control form-control-dark"
+                           placeholder="vless://..." required>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">Добавить</button>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-accent w-100">
+                        <i class="bi bi-plus"></i> Добавить
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Таблица существующих конфигов -->
-    <div class="card">
-        <div class="card-body p-0"> <!-- p-0 чтобы таблица прилипала к краям -->
-            <div class="table-responsive"> <!-- Это предотвращает поломку верстки на мобильных -->
-                <table class="table table-striped align-middle mb-0">
+    <!-- Configs table -->
+    <div class="card-dark" id="section-configs">
+        <div class="card-header">
+            <i class="bi bi-server" style="color:var(--accent)"></i> Серверы
+            <span class="badge ms-auto" style="background:rgba(124,111,247,.15);color:var(--accent);border:1px solid rgba(124,111,247,.3);">{{ configs|length }}</span>
+            <div class="ms-2">
+                <input type="text" class="form-control form-control-dark form-control-sm"
+                       id="config-search" placeholder="Поиск..." style="width:160px;">
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <!-- Desktop table -->
+            <div class="table-responsive d-none d-md-block">
+                <table class="table table-dark-custom mb-0" id="configs-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th style="width:40px;">#</th>
                             <th>Название</th>
-                            <th>Ссылка</th>
+                            <th>Конфигурация</th>
                             <th>Статус</th>
-                            <th>Действия</th>
+                            <th style="width:180px;">Действия</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for config in configs %}
-                        <tr>
-                            <td>{{ config.id }}</td>
-                            <td>{{ config.name }}</td>
-                            <td><small class="text-muted" style="word-break: break-all;">{{ config.config_url[:30] }}...</small></td>
+                        <tr class="config-row">
+                            <td class="text-muted">{{ config.id }}</td>
+                            <td><span class="config-name-cell">{{ config.name }}</span></td>
+                            <td><small class="text-muted font-monospace">{{ config.raw_link[:40] }}…</small></td>
                             <td>
                                 {% if config.is_active %}
-                                    <span class="badge bg-success">Активен</span>
+                                <span class="badge-active">Активен</span>
                                 {% else %}
-                                    <span class="badge bg-secondary">Выключен</span>
+                                <span class="badge-inactive">Выкл</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <!-- d-flex flex-wrap заставляет кнопки переноситься на новую строку, если места мало -->
-                                <div class="d-flex flex-wrap gap-2">
-                                    <form action="/admin/toggle/{{ config.id }}" method="post">
-                                        <button type="submit" class="btn btn-sm {% if config.is_active %}btn-warning{% else %}btn-success{% endif %}">
-                                            {% if config.is_active %}Выкл{% else %}Вкл{% endif %}
+                                <div class="d-flex gap-1 flex-wrap">
+                                    <button class="btn btn-ghost btn-sm px-2"
+                                            onclick="openEditModal({{ config.id }}, '{{ config.name|replace("'", "\\'") }}', '{{ config.raw_link|replace("'", "\\'") }}')"
+                                            title="Редактировать">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form action="/admin/toggle/{{ config.id }}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm px-2 {% if config.is_active %}btn-warn-soft{% else %}btn-success-soft{% endif %}"
+                                                title="{% if config.is_active %}Выключить{% else %}Включить{% endif %}">
+                                            <i class="bi {% if config.is_active %}bi-toggle-on{% else %}bi-toggle-off{% endif %}"></i>
                                         </button>
                                     </form>
-                                    <form action="/admin/delete/{{ config.id }}" method="post">
-                                        <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
+                                    <form action="/admin/delete/{{ config.id }}" method="post" class="d-inline"
+                                          onsubmit="return confirm('Удалить сервер «{{ config.name }}»?')">
+                                        <button type="submit" class="btn btn-danger-soft btn-sm px-2" title="Удалить">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     </form>
                                 </div>
                             </td>
                         </tr>
                         {% endfor %}
                         {% if not configs %}
-                        <tr>
-                            <td colspan="5" class="text-center p-3">Конфигураций пока нет.</td>
-                        </tr>
+                        <tr><td colspan="5" class="text-center py-4" style="color:var(--muted);">
+                            <i class="bi bi-inbox me-2"></i>Серверов пока нет
+                        </td></tr>
                         {% endif %}
                     </tbody>
                 </table>
             </div>
+
+            <!-- Mobile cards -->
+            <div class="d-block d-md-none p-3" id="mobile-configs">
+                {% for config in configs %}
+                <div class="config-card config-row">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="config-name config-name-cell">{{ config.name }}</div>
+                            <div class="config-url">{{ config.raw_link[:50] }}…</div>
+                        </div>
+                        {% if config.is_active %}
+                        <span class="badge-active ms-2">Активен</span>
+                        {% else %}
+                        <span class="badge-inactive ms-2">Выкл</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex gap-2 mt-2 flex-wrap">
+                        <button class="btn btn-ghost btn-sm"
+                                onclick="openEditModal({{ config.id }}, '{{ config.name|replace("'", "\\'") }}', '{{ config.raw_link|replace("'", "\\'") }}')">
+                            <i class="bi bi-pencil me-1"></i>Изменить
+                        </button>
+                        <form action="/admin/toggle/{{ config.id }}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm {% if config.is_active %}btn-warn-soft{% else %}btn-success-soft{% endif %}">
+                                {% if config.is_active %}<i class="bi bi-toggle-on me-1"></i>Выкл{% else %}<i class="bi bi-toggle-off me-1"></i>Вкл{% endif %}
+                            </button>
+                        </form>
+                        <form action="/admin/delete/{{ config.id }}" method="post" class="d-inline"
+                              onsubmit="return confirm('Удалить сервер «{{ config.name }}»?')">
+                            <button type="submit" class="btn btn-danger-soft btn-sm">
+                                <i class="bi bi-trash me-1"></i>Удалить
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-center py-3" style="color:var(--muted);"><i class="bi bi-inbox me-2"></i>Серверов пока нет</p>
+                {% endfor %}
+            </div>
         </div>
     </div>
-    
-    <div class="mt-4 mb-5">
-        <p><strong>Ссылка для подписки:</strong> <a href="#" target="_blank" class="text-decoration-none" id="sub-link">/sub</a></p>
+
+    <!-- External subscriptions -->
+    <div class="card-dark" id="section-external">
+        <div class="card-header"><i class="bi bi-link-45deg" style="color:var(--accent)"></i> Внешние подписки</div>
+        <div class="card-body">
+
+            <!-- Fetch form -->
+            <div class="row g-3 mb-4">
+                <div class="col-12">
+                    <label class="form-label-dark">URL подписки</label>
+                    <div class="d-flex gap-2">
+                        <input type="url" id="ext-url" class="form-control form-control-dark"
+                               placeholder="https://example.com/sub/...">
+                        <button class="btn btn-accent" onclick="fetchSubscription()" id="fetch-btn" style="white-space:nowrap;">
+                            <i class="bi bi-cloud-download me-1"></i>Загрузить
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fetch results -->
+            <div id="fetch-results">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span style="font-size:.85rem;color:var(--muted);">Найдено конфигов: <strong id="found-count" style="color:var(--text);">0</strong></span>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-ghost btn-sm" onclick="selectAll(true)">Выбрать все</button>
+                        <button class="btn btn-ghost btn-sm" onclick="selectAll(false)">Снять все</button>
+                    </div>
+                </div>
+                <div id="fetch-list" style="max-height:320px;overflow-y:auto;" class="mb-3"></div>
+                <form id="save-form" action="/admin/external-subs/save" method="post">
+                    <input type="hidden" name="sub_url" id="save-url">
+                    <div id="save-hidden-fields"></div>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-6">
+                            <label class="form-label-dark">Название подписки</label>
+                            <input type="text" name="sub_name" class="form-control form-control-dark"
+                                   placeholder="Например: Основная" required id="save-name">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button type="button" class="btn btn-accent" onclick="submitSelected()">
+                                <i class="bi bi-plus-circle me-1"></i>Добавить выбранные
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Saved subscriptions -->
+            {% if subscriptions %}
+            <hr style="border-color:var(--border);margin:1.5rem 0;">
+            <div style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;">Сохранённые подписки</div>
+            {% for sub in subscriptions %}
+            <div class="mb-3" style="border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+                <div class="d-flex align-items-center justify-content-between px-3 py-2"
+                     style="background:var(--surface2);">
+                    <div>
+                        <span style="font-weight:600;font-size:.9rem;">{{ sub.name }}</span>
+                        <small class="ms-2" style="color:var(--muted);">{{ sub.url[:50] }}{% if sub.url|length > 50 %}…{% endif %}</small>
+                        <span class="badge ms-2" style="background:rgba(124,111,247,.12);color:var(--accent);border:1px solid rgba(124,111,247,.2);font-size:.7rem;">
+                            {{ ext_configs_map[sub.id]|length }} серверов
+                        </span>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <button class="btn btn-ghost btn-sm ext-toggle"
+                                onclick="toggleExtConfigs('ext-{{ sub.id }}', this)">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <form action="/admin/external-subs/{{ sub.id }}/delete" method="post" class="d-inline"
+                              onsubmit="return confirm('Удалить подписку «{{ sub.name }}» и все её серверы?')">
+                            <button type="submit" class="btn btn-danger-soft btn-sm px-2">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Configs of this subscription -->
+                <div id="ext-{{ sub.id }}" style="display:none; background: var(--surface);">
+                    {% set sub_configs = ext_configs_map[sub.id] %}
+                    {% if sub_configs %}
+                    <div class="table-responsive d-none d-md-block">
+                        <table class="table table-dark-custom mb-0" style="font-size:.82rem;">
+                            <thead>
+                                <tr>
+                                    <th>Название</th>
+                                    <th>Ссылка</th>
+                                    <th>Статус</th>
+                                    <th style="width:160px;">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ec in sub_configs %}
+                                <tr>
+                                    <td>{{ ec.name }}</td>
+                                    <td><small class="text-muted font-monospace">{{ ec.raw_link[:40] }}…</small></td>
+                                    <td>
+                                        {% if ec.is_active %}<span class="badge-active">Активен</span>
+                                        {% else %}<span class="badge-inactive">Выкл</span>{% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <button class="btn btn-ghost btn-sm px-2"
+                                                    onclick="openRenameModal({{ ec.id }}, '{{ ec.name|replace("'", "\\'") }}')"
+                                                    title="Переименовать">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <form action="/admin/toggle/{{ ec.id }}" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-sm px-2 {% if ec.is_active %}btn-warn-soft{% else %}btn-success-soft{% endif %}">
+                                                    <i class="bi {% if ec.is_active %}bi-toggle-on{% else %}bi-toggle-off{% endif %}"></i>
+                                                </button>
+                                            </form>
+                                            <form action="/admin/delete/{{ ec.id }}" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Удалить конфиг?')">
+                                                <button type="submit" class="btn btn-danger-soft btn-sm px-2">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Mobile -->
+                    <div class="d-block d-md-none p-3">
+                        {% for ec in sub_configs %}
+                        <div class="config-card mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span style="font-weight:600;font-size:.85rem;">{{ ec.name }}</span>
+                                {% if ec.is_active %}<span class="badge-active">Акт</span>
+                                {% else %}<span class="badge-inactive">Выкл</span>{% endif %}
+                            </div>
+                            <div style="font-size:.72rem;color:var(--muted);margin-top:2px;">{{ ec.raw_link[:45] }}…</div>
+                            <div class="d-flex gap-2 mt-2 flex-wrap">
+                                <button class="btn btn-ghost btn-sm" onclick="openRenameModal({{ ec.id }}, '{{ ec.name|replace("'", "\\'") }}')">
+                                    <i class="bi bi-pencil me-1"></i>Переим.
+                                </button>
+                                <form action="/admin/toggle/{{ ec.id }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm {% if ec.is_active %}btn-warn-soft{% else %}btn-success-soft{% endif %}">
+                                        {% if ec.is_active %}Выкл{% else %}Вкл{% endif %}
+                                    </button>
+                                </form>
+                                <form action="/admin/delete/{{ ec.id }}" method="post" class="d-inline"
+                                      onsubmit="return confirm('Удалить?')">
+                                    <button type="submit" class="btn btn-danger-soft btn-sm"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-center py-3" style="color:var(--muted);font-size:.85rem;">Нет конфигов</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+</div><!-- /main-content -->
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title"><i class="bi bi-pencil me-2"></i>Редактировать сервер</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="edit-form" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label-dark">Название</label>
+                        <input type="text" name="name" id="edit-name" class="form-control form-control-dark" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label-dark">Конфигурация</label>
+                        <input type="text" name="raw_link" id="edit-url" class="form-control form-control-dark" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-accent"><i class="bi bi-check2 me-1"></i>Сохранить</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-<script>
-    document.getElementById('sub-link').innerText = window.location.origin + "/sub";
-    document.getElementById('sub-link').href = window.location.origin + "/sub";
-</script>
+<!-- Rename External Config Modal -->
+<div class="modal fade" id="renameModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title"><i class="bi bi-pencil me-2"></i>Переименовать сервер</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="rename-form" method="post">
+                <div class="modal-body">
+                    <label class="form-label-dark">Новое название</label>
+                    <input type="text" name="name" id="rename-input" class="form-control form-control-dark" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-accent"><i class="bi bi-check2 me-1"></i>Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
+<!-- Toast container -->
+<div class="toast-container">
+    <div id="toast" class="toast align-items-center text-white border-0" role="alert" style="background:var(--surface2);border:1px solid var(--border)!important;">
+        <div class="d-flex">
+            <div class="toast-body" id="toast-body">Скопировано!</div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Subscription link
+const subLink = window.location.origin + '/sub';
+document.getElementById('sub-link-text').textContent = subLink;
+
+function copySubLink() {
+    navigator.clipboard.writeText(subLink).then(() => {
+        document.getElementById('copy-icon').className = 'bi bi-check2';
+        showToast('Ссылка скопирована!');
+        setTimeout(() => document.getElementById('copy-icon').className = 'bi bi-clipboard', 2000);
+    });
+}
+
+function showToast(msg) {
+    document.getElementById('toast-body').textContent = msg;
+    new bootstrap.Toast(document.getElementById('toast'), {delay: 2500}).show();
+}
+
+// Sidebar mobile
+document.getElementById('sidebarToggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('show');
+    document.getElementById('sidebarOverlay').classList.toggle('show');
+});
+document.getElementById('sidebarOverlay').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('show');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+});
+
+// Config search
+document.getElementById('config-search').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.config-row').forEach(row => {
+        const name = row.querySelector('.config-name-cell')?.textContent.toLowerCase() || '';
+        row.style.display = name.includes(q) ? '' : 'none';
+    });
+});
+
+// Edit modal
+function openEditModal(id, name, url) {
+    document.getElementById('edit-form').action = '/admin/edit/' + id;
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-url').value = url;
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+// Rename external config modal
+function openRenameModal(id, name) {
+    document.getElementById('rename-form').action = '/admin/external-configs/' + id + '/rename';
+    document.getElementById('rename-input').value = name;
+    new bootstrap.Modal(document.getElementById('renameModal')).show();
+}
+
+// Toggle external configs collapse
+function toggleExtConfigs(id, btn) {
+    const el = document.getElementById(id);
+    const icon = btn.querySelector('i');
+    if (el.style.display === 'none') {
+        el.style.display = '';
+        icon.className = 'bi bi-chevron-up';
+    } else {
+        el.style.display = 'none';
+        icon.className = 'bi bi-chevron-down';
+    }
+}
+
+// Fetch subscription
+async function fetchSubscription() {
+    const url = document.getElementById('ext-url').value.trim();
+    if (!url) return;
+    const btn = document.getElementById('fetch-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Загрузка...';
+
+    try {
+        const fd = new FormData();
+        fd.append('url', url);
+        const resp = await fetch('/admin/external-subs/fetch', { method: 'POST', body: fd });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        const configs = data.configs || [];
+
+        document.getElementById('found-count').textContent = configs.length;
+        document.getElementById('save-url').value = url;
+
+        const list = document.getElementById('fetch-list');
+        list.innerHTML = '';
+        configs.forEach((c, i) => {
+            const div = document.createElement('div');
+            div.className = 'fetch-item';
+            div.innerHTML = `
+                <label class="d-flex align-items-start gap-2">
+                    <input type="checkbox" class="fetch-check form-check-input mt-1" checked
+                           data-name="${escHtml(c.name)}" data-link="${escHtml(c.raw_link)}">
+                    <div>
+                        <input type="text" class="form-control form-control-dark form-control-sm fetch-name-input"
+                               value="${escHtml(c.name)}" style="margin-bottom:3px;font-weight:600;">
+                        <small style="color:var(--muted);font-size:.72rem;word-break:break-all;">${escHtml(c.raw_link.substring(0,60))}…</small>
+                    </div>
+                </label>`;
+            list.appendChild(div);
+        });
+
+        document.getElementById('fetch-results').style.display = configs.length ? 'block' : 'none';
+        if (!configs.length) showToast('Конфигов не найдено');
+    } catch(e) {
+        showToast('Ошибка загрузки: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-cloud-download me-1"></i>Загрузить';
+    }
+}
+
+function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function selectAll(val) {
+    document.querySelectorAll('.fetch-check').forEach(cb => cb.checked = val);
+}
+
+function submitSelected() {
+    const subName = document.getElementById('save-name').value.trim();
+    if (!subName) { showToast('Введите название подписки'); return; }
+
+    const hidden = document.getElementById('save-hidden-fields');
+    hidden.innerHTML = '';
+
+    const items = document.querySelectorAll('#fetch-list .fetch-item');
+    let count = 0;
+    items.forEach(item => {
+        const cb = item.querySelector('.fetch-check');
+        if (!cb.checked) return;
+        const nameInput = item.querySelector('.fetch-name-input');
+        const name = nameInput ? nameInput.value.trim() : cb.dataset.name;
+        const link = cb.dataset.link;
+
+        const n = document.createElement('input');
+        n.type = 'hidden'; n.name = 'names'; n.value = name;
+        const l = document.createElement('input');
+        l.type = 'hidden'; l.name = 'raw_links'; l.value = link;
+        hidden.appendChild(n);
+        hidden.appendChild(l);
+        count++;
+    });
+
+    if (!count) { showToast('Выберите хотя бы один конфиг'); return; }
+    document.getElementById('save-form').submit();
+}
+</script>
 </body>
 </html>
